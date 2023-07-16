@@ -1,0 +1,71 @@
+plugins {
+    id 'application' 
+    id 'jacoco'
+    id 'eclipse'
+    id 'java'
+}
+
+jacoco {
+    toolVersion = "0.8.8"
+    reportsDirectory = layout.buildDirectory.dir('customJacocoReportDir')
+}
+
+repositories {
+    mavenCentral() 
+}
+
+dependencies {
+	implementation 'com.microsoft.sqlserver:mssql-jdbc:11.2.1.jre18'
+    testImplementation (
+    	'org.junit.jupiter:junit-jupiter:5.8.2',
+    	'commons-io:commons-io:2.11.0',
+    	'org.apache.commons:commons-lang3:3.12.0'
+    ) 
+}
+
+application {
+    mainClass = 'Main' 
+}
+
+tasks.named('test') {
+    useJUnitPlatform() 
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'Main'
+    }
+    
+    from {
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+    }
+    exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.MF"
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src'
+        }
+    }
+	
+	test {
+		java {
+			srcDirs 'test'
+		}
+	}
+ }
